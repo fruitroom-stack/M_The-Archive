@@ -20,33 +20,47 @@
         .font-brand { font-family: 'Playfair Display', serif; }
         .font-ui { font-family: 'Inter', sans-serif; }
         .archive-card { transition: all 0.4s ease; border: 1px solid rgba(0,0,0,0.05); background: #fff; border-radius: 1.5rem; overflow: hidden; position: relative; }
-        .selected { border-color: #000; transform: scale(0.97); }
-        .check-badge { position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; background: #000; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 10; border: 2px solid #fff; }
+        .selected { border-color: #000; transform: scale(0.97); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .check-badge { position: absolute; top: 1rem; left: 1rem; width: 22px; height: 22px; background: #000; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 10; border: 2px solid #fff; }
         .sticky-nav { position: sticky; top: 0; z-index: 1000; background: rgba(253, 252, 251, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        
-        /* 모바일 대응 업로드 버튼 */
         .main-upload-btn { background-color: #000; color: #fff; width: 100%; max-width: 400px; padding: 1.5rem; border-radius: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin: 0 auto 2rem; }
-
+        
         @media print {
             @page { size: A4; margin: 0; }
-            html, body { height: auto !important; overflow: visible !important; }
-            #root > div > .no-print, #root > div > main, #root > div > footer, .settings-modal { display: none !important; }
-            .print-container { display: block !important; width: 210mm; background: white; }
-            .print-page { 
-                page-break-after: always !important; 
-                break-after: page !important;
-                height: 296.5mm; /* 빈 페이지 방지를 위해 약간 줄임 */
-                overflow: hidden; 
-                display: flex !important; 
-                flex-direction: column; 
-                align-items: center; 
-                background: white; 
-                position: relative;
+            html, body { 
+                width: 210mm !important; 
+                height: auto !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact;
             }
+            #root > div > .no-print, #root > div > main, #root > div > footer, .settings-modal { display: none !important; }
+            .print-container { display: block !important; width: 210mm !important; }
+            
+            .print-page { 
+                display: flex !important; 
+                flex-direction: column !important; 
+                align-items: center !important; 
+                background: white !important; 
+                width: 210mm !important; 
+                height: 290mm !important; /* 모바일 빈 페이지 방지를 위해 높이를 더 과감하게 줄임 */
+                page-break-after: always !important;
+                break-after: page !important;
+                position: relative !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+                border: none !important;
+            }
+            
+            /* 표지 폰트 대폭 확대 */
             .print-cover { justify-content: center; }
+            .cover-title { font-size: 80px !important; margin-bottom: 30px !important; line-height: 1; }
+            .cover-credit { font-size: 14px !important; font-weight: bold; letter-spacing: 0.3em; opacity: 0.8; }
+            
             .content-page { justify-content: flex-start; padding: 20mm; }
-            .print-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #121212; padding-bottom: 5mm; margin-bottom: 15mm; }
-            .print-image-box { width: 100%; height: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15mm; }
+            .print-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1.5px solid #121212; padding-bottom: 5mm; margin-bottom: 15mm; }
+            .print-image-box { width: 100%; height: 45%; display: flex; align-items: center; justify-content: center; margin-bottom: 15mm; }
             .print-image-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
             .print-text-box { width: 100%; text-align: center; }
         }
@@ -56,7 +70,6 @@
 <body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
     <div id="root"></div>
     <script type="text/babel">
-        // 보안 로직
         window.addEventListener('keydown', function(e) {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault(); return false;
@@ -78,7 +91,7 @@
             const [isSelectMode, setIsSelectMode] = useState(false);
             
             const [brandTitle, setBrandTitle] = useState(() => getSavedData('brandTitle', 'THE ARCHIVE'));
-            const [curatorName, setCuratorName] = useState(() => getSavedData('curatorName', 'Heewon Yoo'));
+            const [curatorName, setCuratorName] = useState(() => getSavedData('curatorName', 'HEEWON YOO'));
             const [officialEmail, setOfficialEmail] = useState(() => getSavedData('officialEmail', 'info@curateforhome.com'));
             const [officialWeb, setOfficialWeb] = useState(() => getSavedData('officialWeb', 'curateforhome.com'));
             const [officialInsta, setOfficialInsta] = useState(() => getSavedData('officialInsta', 'curateforhome'));
@@ -136,17 +149,30 @@
                 if(newItems.length > 0 && view === 'home') setView('list');
             };
 
-            const addWebArchive = () => {
-                let url = prompt("URL to archive:");
-                if (!url) return;
-                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                const newItem = { id: crypto.randomUUID(), preview: `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`, note: `Link: ${url}`, category: currentCategory || categories[0].id, type: 'website', url: url, date: new Date().toLocaleDateString() };
-                setItems(prev => [newItem, ...prev]);
-                if(view === 'home') setView('list');
-            };
-
             const filteredItems = useMemo(() => currentCategory ? items.filter(i => i.category === currentCategory) : items, [items, currentCategory]);
             const printItems = useMemo(() => selectedIds.length > 0 ? items.filter(i => selectedIds.includes(i.id)) : filteredItems, [items, selectedIds, filteredItems]);
+
+            const downloadZip = async () => {
+                const zip = new JSZip();
+                const targets = items.filter(i => selectedIds.includes(i.id));
+                for (let i = 0; i < targets.length; i++) {
+                    const res = await fetch(targets[i].preview);
+                    const blob = await res.blob();
+                    zip.file(`archive_${i+1}.jpg`, blob);
+                }
+                zip.generateAsync({type:"blob"}).then(c => saveAs(c, "Selection.zip"));
+            };
+
+            const toggleSelectAll = () => {
+                setSelectedIds(selectedIds.length === filteredItems.length ? [] : filteredItems.map(i => i.id));
+            };
+
+            const moveSelectedToCategory = (catId) => {
+                if (selectedIds.length === 0) return;
+                setItems(prev => prev.map(item => selectedIds.includes(item.id) ? { ...item, category: catId } : item));
+                setSelectedIds([]);
+                setIsSelectMode(false);
+            };
 
             return (
                 <div className="flex flex-col min-h-screen">
@@ -180,26 +206,46 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsSettingsOpen(false)} className="w-full mt-10 bg-black text-white py-4 rounded-full font-ui text-xs font-bold uppercase tracking-widest">Apply Branding</button>
+                                <button onClick={() => setIsSettingsOpen(false)} className="w-full mt-10 bg-black text-white py-4 rounded-full font-ui text-xs font-bold uppercase tracking-widest shadow-lg">Apply Branding</button>
                             </div>
                         </div>
                     )}
 
                     <div className="no-print sticky-nav">
-                        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center text-left">
+                        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-4">
                             <div onClick={() => {setView('home'); setCurrentCategory(null); setIsSelectMode(false); setSelectedIds([]);}} className="cursor-pointer">
-                                <h1 className="text-2xl md:text-4xl font-brand italic tracking-tighter truncate max-w-[150px] md:max-w-none">{brandTitle}</h1>
-                                <p className="text-[8px] md:text-[10px] tracking-[0.2em] uppercase font-ui font-bold mt-0.5 tracking-widest truncate">by {curatorName}</p>
+                                <h1 className="text-2xl md:text-4xl font-brand italic tracking-tighter truncate">{brandTitle}</h1>
+                                <p className="text-[8px] md:text-[10px] tracking-[0.2em] uppercase font-ui font-bold mt-1 tracking-widest truncate">by {curatorName}</p>
                             </div>
-                            <div className="flex items-center gap-3 md:gap-4 font-ui text-[9px] md:text-[11px] font-bold uppercase tracking-widest">
-                                {view === 'list' && <button onClick={addWebArchive} className="hidden md:block hover:underline opacity-60">Web Reference</button>}
+                            <div className="flex flex-wrap justify-center items-center gap-2 md:gap-4 font-ui text-[9px] md:text-[11px] font-bold uppercase tracking-widest">
+                                {view === 'list' && (
+                                    <div className="flex flex-wrap justify-center items-center gap-2">
+                                        <button onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds([]); }} className={`px-3 md:px-5 py-2 rounded-full border transition-all ${isSelectMode ? 'bg-black text-white border-black shadow-md' : 'bg-gray-100 border-gray-200 text-gray-800'}`}>{isSelectMode ? 'Cancel' : 'Select'}</button>
+                                        {isSelectMode && (
+                                            <div className="flex flex-wrap justify-center items-center gap-2 border-l pl-2 border-gray-200">
+                                                <button onClick={toggleSelectAll} className="px-3 py-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50">{selectedIds.length === filteredItems.length ? 'Deselect All' : 'Select All'}</button>
+                                                {selectedIds.length > 0 && (
+                                                    <>
+                                                        <button onClick={downloadZip} className="text-blue-600 hover:underline">ZIP</button>
+                                                        <div className="flex flex-wrap gap-1.5 items-center bg-white px-2 py-1 rounded-2xl border border-gray-100 max-w-[150px] md:max-w-none">
+                                                            {categories.map(cat => (
+                                                                <button key={cat.id} onClick={() => moveSelectedToCategory(cat.id)} className="w-4 h-4 rounded-full shadow-sm hover:scale-125 transition-transform" style={{backgroundColor: cat.color}} title={cat.name} />
+                                                            ))}
+                                                        </div>
+                                                        <button onClick={() => { if(confirm('Delete?')) setItems(items.filter(i => !selectedIds.includes(i.id))); setSelectedIds([]); }} className="text-red-400">Del</button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <button onClick={() => setIsSettingsOpen(true)} className="px-3 md:px-5 py-2 rounded-full border border-gray-200 hover:bg-gray-100 opacity-60 transition-all">Settings</button>
                                 <button onClick={() => window.print()} className="bg-black text-white px-4 md:px-6 py-2 rounded-full hover:bg-gray-800 transition-all shadow-lg">Print PDF</button>
                             </div>
                         </div>
                     </div>
 
-                    <main className="max-w-7xl mx-auto px-6 pt-8 pb-20 flex-grow w-full">
+                    <main className="max-w-7xl mx-auto px-8 pt-8 pb-20 flex-grow w-full">
                         {view === 'home' ? (
                             <div className="flex flex-col">
                                 <label className="main-upload-btn no-print">
@@ -227,7 +273,7 @@
                                             <textarea value={item.note} onClick={e => e.stopPropagation()} onChange={e => setItems(items.map(i => i.id === item.id ? {...i, note: e.target.value} : i))} className="w-full bg-transparent resize-none focus:outline-none text-[13px] md:text-[15px] font-serif h-24 md:h-32 leading-relaxed text-gray-700" placeholder="Write a note..." />
                                             <div className="mt-auto pt-4 flex justify-between items-center text-[8px] uppercase font-ui font-bold opacity-30 tracking-widest">
                                                 <span>{categories.find(c => c.id === item.category)?.name}</span>
-                                                <button onClick={(e) => {e.stopPropagation(); setItems(items.filter(i => i.id !== item.id));}} className="hover:text-red-500">Remove</button>
+                                                {!isSelectMode && <button onClick={(e) => {e.stopPropagation(); setItems(items.filter(i => i.id !== item.id));}} className="hover:text-red-500">Remove</button>}
                                             </div>
                                         </div>
                                     </div>
@@ -236,7 +282,7 @@
                         )}
                     </main>
 
-                    <footer className="no-print max-w-7xl mx-auto w-full px-6 py-12 border-t border-gray-100 mt-12 text-left opacity-40">
+                    <footer className="no-print max-w-7xl mx-auto w-full px-8 py-12 border-t border-gray-100 mt-12 text-left opacity-40">
                         <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                             <div>
                                 <h4 className="font-brand italic text-lg md:text-xl mb-1">{brandTitle} | {curatorName}</h4>
@@ -245,7 +291,6 @@
                             <div className="space-y-1 text-[10px] md:text-[11px] font-bold font-ui">
                                 <p>{officialWeb}</p>
                                 <p>{officialEmail}</p>
-                                <p className="mt-4 text-[8px] opacity-60 tracking-widest uppercase">Professional Digital Archive</p>
                             </div>
                         </div>
                     </footer>
@@ -253,7 +298,7 @@
                     <div className="print-container">
                         <div className="print-page print-cover">
                             <h1 className="cover-title font-brand italic tracking-tighter">{currentCategory ? categories.find(c => c.id === currentCategory).name : brandTitle}</h1>
-                            <p className="cover-credit font-ui tracking-widest uppercase">made by {brandTitle} | {curatorName}</p>
+                            <p className="cover-credit font-ui tracking-widest uppercase">MADE BY {brandTitle} | {curatorName}</p>
                         </div>
                         {printItems.map(item => (
                             <div key={`p-${item.id}`} className="print-page content-page text-center">
